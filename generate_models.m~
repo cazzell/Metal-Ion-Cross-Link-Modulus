@@ -1,22 +1,8 @@
-%% Code authored by Seth Allen Cazzell
-% cazzell.lbi@gmail.com
-
-% This is the program to modify to generate predictions for your system of
-% interest
-
-%% Please reference
-% "Expanding the stoichiometric window for metal cross-linked gel assembly using competition" PNAS, Cazzell (2019)
-% when appropriate.
-
-%% Copyright 2019 Seth Allen Cazzell All rights reserved. Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
-% 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-% 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-% THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-%%
 function [species_input_model] = generate_models()
 
 description = 'DescriptionText';
+
+%polymer_ligand = {'n'};
 
 %ligands = {'n','n','c','n'};
 %ligands = {'n','c'};
@@ -24,12 +10,15 @@ ligands = {'n'}
 
 % ligand functionality defines what the ligand is covalently attached to
 % enter a value of
-% 1 for a 1-arm polymer bound ligand or monofuntional small molecule
+% 0 for a small molecule ligand
+% 1 for a 1-arm polymer bound ligand
 % 2 for a linear telechelic ligand
 % f for a arbitrary f-arm star polymer ligand
+% NOTE ? Only one ligand functionality should be greater than 1
 %ligands_functionality = [2,3,0,4];
 %ligands_functionality = [2, 4];
 ligands_functionality = [4];
+
 
 %metals = {'Fe','Al'};
 %metals = {'Cu','Ni'};
@@ -40,10 +29,14 @@ metals = {'Fe'};
 % species, then comment out hydroxide line
 hydroxide = {'OH'};
 
-% Initial and final concentrations rastered across titration series
+% Initial and final concentrations rastered with pH
+% General format is [ L1, L2, Ln, M1, M2, Mn, proton]
+
+% THIS NEEDS TO CHANGE TO HML Style
 % General format is [M1, M2, Mn, L1, L2, Ln]
 
-% aka metals, then ligands
+% aka ligands, then metals, then proton.
+% Leave proton as 0's. The pH range is handled seperately with pH range parameter
 
 % This is a calculator to figure out molar concentrations for a standard gel
 poly_concentration = 100; % mg/mL
@@ -52,9 +45,18 @@ poly_M = poly_concentration ./ calc_poly_MW;  % mol/L
 critical_arms = 4;
 lig_eqv = poly_M .* critical_arms;
 
-% metals first, then ligand
+%initial_M_eqv =	[1,	5/3,		0/3,	0];
+%final_M_eqv =	[1,	0/3,		5/3,	0];
+% initial_M_eqv = [1, 0,	0];
+% final_M_eqv =	[1, 5/3	0];
+
+% initial_M_eqv = [1, 2, 0,	5/3];
+% final_M_eqv =	[2, 1, 5/3,	0];
+
 % initial_M_eqv = [5/3, 10/3, 1, 1];
 % final_M_eqv =	[10/3, 5/3, 1, 1];
+
+% metals first, then ligand
 initial_M_eqv = [.01, 1];
 final_M_eqv =	[5/3, 1];
 
@@ -131,7 +133,7 @@ binding.c.Fe.matrix(1).constants(1,1) = 20.0;	% Volume 5
 binding.c.Fe.matrix(1).constants(2,1) = 34.7;	% Volume 5
 binding.c.Fe.matrix(1).constants(3,1) = 43.8;	% Volume 5
 
-%% THIS IS WRONG! FIX THIS. CURRENT VALUES ARE JUST FOR DEBUGGING CODE
+%THIS IS WRONG! FIX THIS. CURRENT VALUES ARE JUST FOR DEBUGGING CODE
 %Aluminum = Al
 binding.c.Al.matrix(1).constants(1,1) = 15;
 binding.c.Al.matrix(1).constants(2,1) = 27;
@@ -211,6 +213,7 @@ binding.OH.Zn.matrix(2).constants(2,1) = -12.474;	% Volume 4
 binding.OH.Zn.solid_matrix_number = 2;
 
 %%
+
 % DO NOT CHANGE WATER
 proton = {'H'};
 components = [(proton), (metals), (ligands)];
@@ -414,6 +417,9 @@ for metal_number = 1:length(metals)
 	indices.bound.indices{length(ligands)+1,metal_number} = hold_vector;
 end
 
+
+
+
 % Name all of the species
 for current_species = 1:size(model,2)
 	current_species_vector = model(:,current_species);
@@ -510,6 +516,7 @@ species_input_model.log_beta = model_log_beta;
 species_input_model.spec_names_solids = species_names_solids;
 species_input_model.Model_solids = model_solids;
 species_input_model.log_beta_solids = model_solids_log_beta;
+%species_input_model.beta_solids = 10.^model_solids_log_beta;
 
 species_input_model.calc_spec.KSOLUTION = model_log_beta';
 species_input_model.calc_spec.ASOLUTION = model';
@@ -524,11 +531,13 @@ species_input_model.functionalities = functionalities;
 species_input_model.ligands_functionality = ligands_functionality;
 species_input_model.max_functionality = max(ligands_functionality);
 [~,species_input_model.max_binding_state] = size(indices.binding_state);
+%species_input_model.MW = MW;
 species_input_model.initial_M = initial_M;
 species_input_model.final_M = final_M;
 species_input_model.H_OH_indices = H_OH_indices;
 species_input_model.number = number;
 species_input_model.num_pH = num_pH;
+%species_input_model.polymer_ligand = polymer_ligand;
 species_input_model.ligands = ligands;
 species_input_model.model_all = [model, model_solids];
 species_input_model.log_beta_all = [model_log_beta, model_solids_log_beta];
