@@ -1,4 +1,18 @@
-% This function is used to plot speciation data generated from calc_speciation and contained in the speciation structure
+%% Code authored by Seth Allen Cazzell
+% cazzell.lbi@gmail.com
+
+% This is a function that plots speciation data
+
+%% Please reference
+% "Expanding the stoichiometric window for metal cross-linked gel assembly using competition" PNAS, Cazzell (2019)
+% when appropriate.
+
+%% Copyright 2019 Seth Allen Cazzell All rights reserved. Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+% 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+% 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+% THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+%% This function is used to plot speciation data generated from calc_speciation and contained in the speciation structure
 
 % This function generates two plots for each of the experimentally relevent metal concentrations
 % The first set of plots shows what the polymer bound ligand is coordinating to as a function of pH
@@ -6,6 +20,7 @@
 
 % This program calls get_spec_plot_structure to organize the data for plotting
 
+%%
 function [L_plot,M_plot] = speciation_plots(speciation,species_input_model)
 
 markersize = 6;
