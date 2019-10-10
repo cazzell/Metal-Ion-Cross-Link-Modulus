@@ -18,6 +18,7 @@ function [speciation] = calc_speciation(species_input_model)
 % pH
 num_pH_titrations = species_input_model.num_pH;
 pH = linspace(species_input_model.pH(1), species_input_model.pH(2), num_pH_titrations);
+speciation.pH_list = pH;
 
 % Raster molar concentrations of components
 num_increments = 50;

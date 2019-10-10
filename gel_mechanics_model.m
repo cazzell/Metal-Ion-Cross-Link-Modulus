@@ -15,8 +15,14 @@ warning('off','all')
 % Generates model used to describe the desired system for the speciation program
 [species_input_model] = generate_models()
 
-% Runs speciation program to predict species concentrations vs. pH and metal concentration
+% Runs speciation program to predict species concentrations vs. pH for each input titration
 [speciation] = calc_speciation(species_input_model)
+
+
+% Calculates and plots mechanics
+[mechanics] = calc_mechanics(species_input_model,speciation)
+
+
 
 % % Function to organize and generate plots
 % for metal_number = 1:species_input_model.number.metals+1

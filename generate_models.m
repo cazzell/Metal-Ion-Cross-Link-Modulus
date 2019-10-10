@@ -5,7 +5,8 @@ description = 'DescriptionText';
 %polymer_ligand = {'n'};
 
 %ligands = {'n','n','c','n'};
-ligands = {'n','c'};
+%ligands = {'n','c'};
+ligands = {'n'}
 
 % ligand functionality defines what the ligand is covalently attached to
 % enter a value of
@@ -15,17 +16,18 @@ ligands = {'n','c'};
 % f for a arbitrary f-arm star polymer ligand
 % NOTE ? Only one ligand functionality should be greater than 1
 %ligands_functionality = [2,3,0,4];
-ligands_functionality = [2, 4];
+%ligands_functionality = [2, 4];
+ligands_functionality = [4];
 
 % Molecular weight of polymer. If it is a small molecule ligand, enter 0.
 % Note, this is the weight of the whole polymer, not just a single arm.
 %poly_MW = [5000, 0, 10000,0];
-MW = [5000];
+%MW = [5000];
 
-metals = {'Fe','Al'};
+%metals = {'Fe','Al'};
 %metals = {'Cu','Ni'};
 %metals = {'Co'};
-%metals = {'Fe'};
+metals = {'Fe'};
 
 % If you don't want to consider the possible formation of metal-hydroxide
 % species, then comment out hydroxide line
@@ -55,8 +57,12 @@ lig_eqv = poly_M .* critical_arms;
 % initial_M_eqv = [1, 2, 0,	5/3];
 % final_M_eqv =	[2, 1, 5/3,	0];
 
-initial_M_eqv = [5/3, 10/3, 1, 1];
-final_M_eqv =	[10/3, 5/3, 1, 1];
+% initial_M_eqv = [5/3, 10/3, 1, 1];
+% final_M_eqv =	[10/3, 5/3, 1, 1];
+
+% metals first, then ligand
+initial_M_eqv = [.01, 1];
+final_M_eqv =	[5/3, 1];
 
 initial_M = initial_M_eqv .* lig_eqv;
 final_M = final_M_eqv .* lig_eqv;
@@ -482,6 +488,27 @@ for current_species = 1:size(model_solids,2)
 	species_names_solids{1,current_species} = species_name_solids;
 end
 
+% Add functionalities for combination
+[rows,columns] = size(functionalities)
+
+% Add to column
+for row_num = 1:rows
+	col_num = columns+1;
+	functionalities{row_num,col_num} =  functionalities{row_num,col_num-1};
+end
+
+% Add to rows
+for col_num = 1:columns+1
+	functionality_vector = null(1,1);
+	for row_num = 1:rows
+		current_functionality = functionalities{row_num,col_num};
+		if  ~ismember(current_functionality, functionality_vector)
+			functionality_vector = [functionality_vector,current_functionality];
+		end
+	end
+	functionalities{row_num+1,col_num} = functionality_vector;
+end
+
 species_input_model.description = description;
 species_input_model.pH = pH_range;
 
@@ -508,7 +535,7 @@ species_input_model.functionalities = functionalities;
 species_input_model.ligands_functionality = ligands_functionality;
 species_input_model.max_functionality = max(ligands_functionality);
 [~,species_input_model.max_binding_state] = size(indices.binding_state);
-species_input_model.MW = MW;
+%species_input_model.MW = MW;
 species_input_model.initial_M = initial_M;
 species_input_model.final_M = final_M;
 species_input_model.H_OH_indices = H_OH_indices;
