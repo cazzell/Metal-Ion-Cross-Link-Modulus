@@ -60,68 +60,6 @@ for titration_number = 1:num_titrations
 	mechanics.titration_number(titration_number).total_ligand(num_ligands+1) = sum(speciation.molar.component_concentration(titration_number, ligand_comp_indices));
 	mechanics.titration_number(titration_number).total_metal(num_metals+1) = sum(speciation.molar.component_concentration(titration_number, metal_comp_indices));
 	
-	for ligand_number = 1:num_ligands+1
-		if ligand_number > num_ligands
-			ligand_row = sum(species_input_model.Model(ligand_comp_indices_H,:),1);
-		else
-			ligand_row = species_input_model.Model(ligand_comp_indices_H(ligand_number),:);
-		end
-		for metal_number = 1:num_metals+1
-			if metal_number > num_ligands
-				metal_row = sum(species_input_model.model_all(metal_comp_indices_H,:),1);
-			else
-				metal_row = species_input_model.model_all(metal_comp_indices_H(metal_number),:);
-			end
-			
-			bound_indices = species_input_model.indices.bound.indices{ligand_number, metal_number};
-			
-			ligand_stoich = ligand_row(bound_indices);
-			metal_stoich = metal_row(bound_indices);
-			
-			pL_numerator = nansum(ligand_stoich .* speciation.titration_number(titration_number).species(:,bound_indices),2);
-			%pM_numerator = nansum(metal_stoich .* speciation.titration_number(titration_number).species(:,bound_indices),2);
-			
-			mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).pL_numerator = pL_numerator;
-			%mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).pM_numerator = pM_numerator;
-			mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).pL = pL_numerator ./ mechanics.titration_number(titration_number).total_ligand(ligand_number);
-			%mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).pM = pM_numerator ./ mechanics.titration_number(titration_number).total_metal(metal_number);
-			
-			% Calculate amount of metal in MOH complexes
-			
-			%% right now this is forgetting about the solid complexes......
-			% It should just be 1 for pB. Decide to keep or modify or prune
-			% later.
-			% 			MOH_indices = species_input_model.indices.MOH.indices{metal_number};
-			%
-			% 			metal_stoich = metal_row(MOH_indices);
-			% 			MOH_sum = nansum(metal_stoich .* speciation.titration_number(titration_number).species(:,MOH_indices),2);
-			%
-			% 			mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).MOH_sum = MOH_sum;
-			% 			mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).pB_neglect_MOH = pM_numerator ./ (mechanics.titration_number(titration_number).total_metal(metal_number) - MOH_sum);
-			%
-			% 			% Calculate amount of free metal???
-			
-			
-			
-		end
-	end
-	
-	
-	% 	for ligand_number = 1:num_ligands+1
-	% 		for metal_number = 1:num_metals+1
-	% 			temp_value = zeros(num_pH, 1);
-	% 			MOH_indices = species_input_model.indices.MOH.indices{metal_number}
-	% 			%for MOH_indicies = species_input_model.indices.MOH.indices{metal_number}
-	% 			temp_value = nansum(speciation.titration_number(titration_number).species(:,MOH_indices),2);
-	% 			%temp_value = speciation.titration_number(titration_number).species(:,MOH_indicies) + temp_value;
-	% 			%end
-	% 			if titration_number == 26
-	% 				test = 5
-	% 			end
-	% 			mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).pB_neglect_MOH = mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).p_numerator ./ (mechanics.titration_number(titration_number).total_ligand(metal_number) - temp_value);
-	% 		end
-	% 	end
-	
 end
 
 %% Calculate lf
@@ -130,20 +68,20 @@ end
 % The rows represent individual titration iterations
 
 % Initialize the matrix for each ligand and combination
-for ligand_number = 1:species_input_model.number.ligands+1
-	mechanics.ligand(ligand_number).lf_molar = zeros(num_titrations,species_input_model.max_functionality+1);
-	mechanics.ligand(ligand_number).lf_fraction = zeros(num_titrations,species_input_model.max_functionality+1);
+for ligand_number = 1:num_ligands+1
+	mechanics.ligand(ligand_number).lf_molar = zeros(num_titrations,species_input_model.max_functionality);
+	mechanics.ligand(ligand_number).lf_fraction = zeros(num_titrations,species_input_model.max_functionality);
 end
 
 % Calculate the molar quantities
-for ligand_number = 1:species_input_model.number.ligands
+for ligand_number = 1:num_ligands
 	current_functionality = species_input_model.ligands_functionality(ligand_number);
 	for titration_number = 1:num_titrations
 		current_molar = speciation.molar.component_concentration(titration_number,ligand_number+species_input_model.number.metals);
 		functionality_column = current_functionality;
 		mechanics.ligand(ligand_number).lf_molar(titration_number,functionality_column) = current_molar;
 		% Add to combined lf
-		mechanics.ligand(species_input_model.number.ligands+1).lf_molar(titration_number,functionality_column) = mechanics.ligand(species_input_model.number.ligands+1).lf_molar(titration_number,functionality_column) + current_molar;
+		mechanics.ligand(num_ligands+1).lf_molar(titration_number,functionality_column) = mechanics.ligand(num_ligands+1).lf_molar(titration_number,functionality_column) + current_molar;
 	end
 end
 
@@ -157,52 +95,76 @@ end
 %% Calculate mg
 
 for titration_number = 1:num_titrations
-	mechanics.titration_number(titration_number).bound_L_molar = zeros(num_pH,species_input_model.number.metals+1);
-	mechanics.titration_number(titration_number).bound_M_molar = zeros(num_pH,species_input_model.number.metals+1);
 	% Initialize binding structure for the all metals (num_metals+1)
 	for bind_state = 1:species_input_model.number.binding_states
-		for metal = 1:species_input_model.number.metals + 1
-			mechanics.titration_number(titration_number).metal(metal).bind_state(bind_state).molar_ligand = zeros(num_pH,1);
-			mechanics.titration_number(titration_number).metal(metal).bind_state(bind_state).molar_metal = zeros(num_pH,1);
-			
-			mechanics.titration_number(titration_number).bind_state(bind_state).mg_by_metal_and_total = zeros(num_pH,species_input_model.number.metals+1);
-			%mechanics.titration_number(titration_number).metal(metal).summations = zeros(num_pH,matrix_order);
+		for ligand_number = 1:species_input_model.number.ligands + 1
+			for metal_number = 1:species_input_model.number.metals + 1
+				mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).bind_state(bind_state).molar_ligand = zeros(num_pH,1);
+				mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).bind_state(bind_state).molar_metal = zeros(num_pH,1);
+				mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).bind_state(bind_state).mg = zeros(num_pH,1);
+			end
+		end
+	end
+	% Intitialize bound molar and pL
+	for ligand_number = 1:species_input_model.number.ligands + 1
+		for metal_number = 1:species_input_model.number.metals + 1
+			mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).bound_M_molar = zeros(num_pH,1);
+			mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).bound_L_molar = zeros(num_pH,1);
+			mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).pL = zeros(num_pH,1);
 		end
 	end
 	
 	% Organize the molar volumes of metal and ligand in each binding state by metal and total
 	for bind_state = 1:species_input_model.number.binding_states
-		for ligand = 1:species_input_model.number.ligands
-			for metal = 1:species_input_model.number.metals
-				total_metal_index = species_input_model.number.metals + 1;
-				current_index = species_input_model.indices.binding_state(bind_state).indices{ligand,metal};
+		for ligand_number = 1:num_ligands
+			for metal_number = 1:num_metals
+				total_metal_index = num_metals + 1;
+				total_ligand_index = num_ligands + 1;
+				current_index = species_input_model.indices.binding_state(bind_state).indices{ligand_number,metal_number};
 				if ~isempty(current_index)
-					mechanics.titration_number(titration_number).metal(metal).bind_state(bind_state).molar_ligand = (speciation.titration_number(titration_number).species(:,current_index) .* bind_state) + mechanics.titration_number(titration_number).metal(metal).bind_state(bind_state).molar_ligand;
-					mechanics.titration_number(titration_number).metal(metal).bind_state(bind_state).molar_metal = (speciation.titration_number(titration_number).species(:,current_index)) + mechanics.titration_number(titration_number).metal(metal).bind_state(bind_state).molar_metal;
+
+					mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).bind_state(bind_state).molar_ligand = (speciation.titration_number(titration_number).species(:,current_index) .* bind_state) + mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).bind_state(bind_state).molar_ligand;
+					mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).bind_state(bind_state).molar_metal = (speciation.titration_number(titration_number).species(:,current_index)) + mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).bind_state(bind_state).molar_metal;
 					
-					mechanics.titration_number(titration_number).bound_L_molar(:,metal) = (speciation.titration_number(titration_number).species(:,current_index) .* bind_state) + mechanics.titration_number(titration_number).bound_L_molar(:,metal);
-					mechanics.titration_number(titration_number).bound_M_molar(:,metal) = (speciation.titration_number(titration_number).species(:,current_index)) + mechanics.titration_number(titration_number).bound_M_molar(:,metal);
-					
-					% Now for the total index
-					mechanics.titration_number(titration_number).metal(total_metal_index).bind_state(bind_state).molar_ligand = (speciation.titration_number(titration_number).species(:,current_index) .* bind_state) + mechanics.titration_number(titration_number).metal(total_metal_index).bind_state(bind_state).molar_ligand;
-					mechanics.titration_number(titration_number).metal(total_metal_index).bind_state(bind_state).molar_metal = (speciation.titration_number(titration_number).species(:,current_index)) + mechanics.titration_number(titration_number).metal(total_metal_index).bind_state(bind_state).molar_metal;
-					
-					mechanics.titration_number(titration_number).bound_L_molar(:,total_metal_index) = (speciation.titration_number(titration_number).species(:,current_index) .* bind_state) + mechanics.titration_number(titration_number).bound_L_molar(:,total_metal_index);
-					mechanics.titration_number(titration_number).bound_M_molar(:,total_metal_index) = (speciation.titration_number(titration_number).species(:,current_index)) + mechanics.titration_number(titration_number).bound_M_molar(:,total_metal_index);
-					
+					mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).bound_M_molar = (speciation.titration_number(titration_number).species(:,current_index)) + mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).bound_M_molar;
+					mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).bound_L_molar = (speciation.titration_number(titration_number).species(:,current_index) .* bind_state) + mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).bound_L_molar;
+										
+					% Total Metal
+					mechanics.titration_number(titration_number).ligand(ligand_number).metal(total_metal_index).bound_M_molar = mechanics.titration_number(titration_number).ligand(ligand_number).metal(total_metal_index).bound_M_molar + (speciation.titration_number(titration_number).species(:,current_index));
+					mechanics.titration_number(titration_number).ligand(ligand_number).metal(total_metal_index).bound_L_molar = mechanics.titration_number(titration_number).ligand(ligand_number).metal(total_metal_index).bound_L_molar + (speciation.titration_number(titration_number).species(:,current_index) .* bind_state);
+					mechanics.titration_number(titration_number).ligand(ligand_number).metal(total_metal_index).bind_state(bind_state).molar_ligand = mechanics.titration_number(titration_number).ligand(ligand_number).metal(total_metal_index).bind_state(bind_state).molar_ligand + (speciation.titration_number(titration_number).species(:,current_index) .* bind_state);
+					mechanics.titration_number(titration_number).ligand(ligand_number).metal(total_metal_index).bind_state(bind_state).molar_metal = mechanics.titration_number(titration_number).ligand(ligand_number).metal(total_metal_index).bind_state(bind_state).molar_metal + (speciation.titration_number(titration_number).species(:,current_index));
+					% Total Ligand
+					mechanics.titration_number(titration_number).ligand(total_ligand_index).metal(metal_number).bound_M_molar = mechanics.titration_number(titration_number).ligand(total_ligand_index).metal(metal_number).bound_M_molar + (speciation.titration_number(titration_number).species(:,current_index));
+					mechanics.titration_number(titration_number).ligand(total_ligand_index).metal(metal_number).bound_L_molar = mechanics.titration_number(titration_number).ligand(total_ligand_index).metal(metal_number).bound_L_molar + (speciation.titration_number(titration_number).species(:,current_index) .* bind_state);
+					mechanics.titration_number(titration_number).ligand(total_ligand_index).metal(metal_number).bind_state(bind_state).molar_ligand = mechanics.titration_number(titration_number).ligand(total_ligand_index).metal(metal_number).bind_state(bind_state).molar_ligand + (speciation.titration_number(titration_number).species(:,current_index) .* bind_state);
+					mechanics.titration_number(titration_number).ligand(total_ligand_index).metal(metal_number).bind_state(bind_state).molar_metal = mechanics.titration_number(titration_number).ligand(total_ligand_index).metal(metal_number).bind_state(bind_state).molar_metal + (speciation.titration_number(titration_number).species(:,current_index));
+					% Combined
+					mechanics.titration_number(titration_number).ligand(total_ligand_index).metal(total_metal_index).bound_M_molar = mechanics.titration_number(titration_number).ligand(total_ligand_index).metal(total_metal_index).bound_M_molar + (speciation.titration_number(titration_number).species(:,current_index));
+					mechanics.titration_number(titration_number).ligand(total_ligand_index).metal(total_metal_index).bound_L_molar = mechanics.titration_number(titration_number).ligand(total_ligand_index).metal(total_metal_index).bound_L_molar + (speciation.titration_number(titration_number).species(:,current_index)  .* bind_state);
+					mechanics.titration_number(titration_number).ligand(total_ligand_index).metal(total_metal_index).bind_state(bind_state).molar_ligand = mechanics.titration_number(titration_number).ligand(total_ligand_index).metal(total_metal_index).bind_state(bind_state).molar_ligand + (speciation.titration_number(titration_number).species(:,current_index) .* bind_state);
+					mechanics.titration_number(titration_number).ligand(total_ligand_index).metal(total_metal_index).bind_state(bind_state).molar_metal = mechanics.titration_number(titration_number).ligand(total_ligand_index).metal(total_metal_index).bind_state(bind_state).molar_metal + (speciation.titration_number(titration_number).species(:,current_index));
 				end
 			end
 		end
 	end
 	
-	% Alternative p_l calculation
-	% 	mechanics.titration(titration_number).p_A_by_metal_and_total = speciation.titration(titration_number).bound_L_molar./speciation.titration_parameters.total_poly_L_M_conc(titration_number);
 	
+	
+	% messing with these next two loops does stuff.
+	for ligand_number = 1:num_ligands + 1
+		for metal_number = 1:num_metals + 1
+			mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).pL = mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).bound_L_molar ./ mechanics.titration_number(titration_number).total_ligand(ligand_number);
+			%mechanics.titration_number(titration_number).ligand(ligand).metal(metal).pL = mechanics.titration_number(titration_number).ligand(ligand).metal(metal).bound_L_molar ./ mechanics.titration_number(titration_number).total_ligand(end);
+		end
+	end
+
 	% Calculate mg data
 	for bind_state = 1:species_input_model.number.binding_states
-		for metal = 1:species_input_model.number.metals
-			mechanics.titration_number(titration_number).bind_state(bind_state).mg_by_metal_and_total(:,metal) = mechanics.titration_number(titration_number).bind_state(bind_state).mg_by_metal_and_total(:,metal) + (mechanics.titration_number(titration_number).metal(metal).bind_state(bind_state).molar_metal ./ mechanics.titration_number(titration_number).bound_M_molar(:,end));
-			mechanics.titration_number(titration_number).bind_state(bind_state).mg_by_metal_and_total(:,end) = mechanics.titration_number(titration_number).bind_state(bind_state).mg_by_metal_and_total(:,end) + (mechanics.titration_number(titration_number).metal(metal).bind_state(bind_state).molar_metal ./ mechanics.titration_number(titration_number).bound_M_molar(:,end));
+		for ligand_number = 1:num_ligands + 1
+			for metal_number = 1:num_metals + 1
+				mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).bind_state(bind_state).mg = mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).bind_state(bind_state).mg + (mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).bind_state(bind_state).molar_metal ./ mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).bound_M_molar);
+			end
 		end
 	end
 end
@@ -216,43 +178,63 @@ max_binding = species_input_model.max_binding_state;
 eqn_order = (max_functionality - 1) .* (max_binding-1);
 
 % Intialize eqn
-
 init_eqn = zeros(num_pH,eqn_order+1);
 identity_vector = ones(num_pH,1);
 
 for titration_number = 1:num_titrations
 	for ligand_number = 1:num_ligands+1
 		for metal_number = 1:num_metals+1
-			
-			eqn = init_eqn;
-			% Easy stuff
-			pL = mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).pL;
-			eqn(:,end) = 1 - pL;
-			eqn(:,end-1) = -1 .* identity_vector;
+						
+			build_eqn = init_eqn;
+			f_eqn = init_eqn;
+						
+			for functionality = 1:max_functionality
+				current_lf = mechanics.ligand(ligand_number).lf_fraction(titration_number,functionality);
+				% This needs to be placed into f-1 position
+				f_eqn(:,end-(functionality-1)) = f_eqn(:,end-(functionality-1)) + current_lf;
+				% Here we would do all of the pM stuff if we decide we need
+				% it. Currently ignoring because it is assumed to be 1.
+			end
 			
 			for binding_state = 1:max_binding
-				for functionality = 1:max_functionality
-					current_lf = mechanics.ligand(ligand_number).lf_fraction(titration_number,functionality);
-					raised_lf = current_lf .^ (binding_state - 1);
-					
-					current_mg = mechanics.titration_number(titration_number).bind_state(binding_state).mg_by_metal_and_total(:,metal_number);
-					current_mg_lf = raised_lf .* current_mg;
-					
-					current_pL = mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).pL;
-					
-					current_pL_mg_lf = current_pL .* current_mg_lf;
-					
-					current_order = (functionality - 1) .* (binding_state - 1);
-					current_column = eqn_order - current_order + 1;
-					
-					eqn(:,current_column) = eqn(:,current_column) + current_pL_mg_lf;
-					
+				eqn = f_eqn;
+				current_mg = mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).bind_state(binding_state).mg;
+
+				% Need to now raise the current equation to power g-1
+				% This uses custom polyPower function to raise a vector
+				% defining a polynomial to a power. The output vextor length 
+				% can be a little weird, so have to do a little work on the
+				% placement side to keep dimensions correct.
+				for eqn_row = 1:length(eqn)
+					out_poly = polyPower(eqn(eqn_row,:), binding_state - 1);
+					for eqn_index = 1:eqn_order+1
+						placement_index = eqn_index - 1;
+						if eqn_index <= length(out_poly)
+							eqn(eqn_row, end-placement_index) = out_poly(end-placement_index);
+						end
+					end
 				end
+
+				build_eqn = (eqn .* current_mg) + build_eqn;
+				
+
 			end
-			mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).eqn = eqn;
+			
+			current_pL = mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).pL;
+			
+			build_eqn = build_eqn .* current_pL;
+				
+			% Add additions that are outside the summations
+			% 1 - pL term
+			build_eqn(:,end) = build_eqn(:,end) + (1 - current_pL);
+			% -x term
+			build_eqn(:,end-1) = build_eqn(:,end-1) + (-1 .* identity_vector);
+						
+			mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).eqn = build_eqn;						
 		end
 	end
 end
+
 
 %% Solve Equation
 for titration_number = 1:num_titrations
@@ -263,7 +245,6 @@ for titration_number = 1:num_titrations
 				output = roots(current_eqn(i,:));
 				real_out= real(output);
 				x = real_out(end);
-				
 				if (x<1) && (x>0)
 					mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).x(i,1) = x;
 				else
@@ -296,7 +277,7 @@ end
 for titration_number = 1:num_titrations
 	for ligand_number = 1:num_ligands+1
 		for metal_number = 1:num_metals+1
-			current_functionalities = species_input_model.functionalities{ligand,metal};
+			current_functionalities = species_input_model.functionalities{ligand_number,metal_number};
 			for f = current_functionalities
 				if f > 2
 					for m = [3:f]
@@ -313,12 +294,12 @@ for titration_number = 1:num_titrations
 	end
 end
 
-%% Arising from metals with binding state > 3
+%% Arising from metals with binding state > 2
 % First need to calculate P(FAin)
 for titration_number = 1:num_titrations
 	for ligand_number = 1:num_ligands+1
 		for metal_number = 1:num_metals+1
-			current_functionalities = species_input_model.functionalities{ligand,metal};
+			current_functionalities = species_input_model.functionalities{ligand_number,metal_number};
 			for f = current_functionalities
 				lf_i = mechanics.ligand(ligand_number).lf_fraction(titration_number,f);
 				F_A_out = mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).x;
@@ -335,10 +316,14 @@ for titration_number = 1:num_titrations
 		for metal_number = 1:num_metals+1
 			for binding_state = 1:species_input_model.number.binding_states
 				if binding_state > 2
-					mg = mechanics.titration_number(titration_number).bind_state(binding_state).mg_by_metal_and_total(:,metal_number);
-					bound_M_molar = mechanics.titration_number(titration_number).bound_M_molar(:,metal_number);
-					bound_M_molar_binding_state = bound_M_molar .* mg;
+					%mg = mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).bind_state(binding_state).mg;
+					%bound_M_molar = mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).bound_M_molar;
+					bound_M_molar_binding_state	= mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).bind_state(bind_state).molar_metal;
+
 					F_A_in = mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).F_A_in;
+					
+					% is this right? Or do I need to do a n choose prob
+					% thing again like I did for the polymer
 					molar_crosslinks = bound_M_molar_binding_state .* (1-F_A_in).^(binding_state);
 					mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).molar_crosslinks(:,binding_state) = molar_crosslinks + mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).molar_crosslinks(:,binding_state);
 				end
@@ -347,8 +332,8 @@ for titration_number = 1:num_titrations
 	end
 end
 
-%
 % Calculate concentration of crosslinks and chains in mol/m^3 (multiply molar quanitity by 1000
+% Initialize
 for titration_number = 1:num_titrations
 	for ligand_number = 1:num_ligands+1
 		for metal_number = 1:num_metals+1
@@ -399,4 +384,4 @@ for ligand_number = 1:num_ligands+1
 	end
 end
 
-
+end

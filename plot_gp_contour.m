@@ -30,6 +30,9 @@ end
 
 description_str = char(species_input_model.description);
 
+description_str = 'M_3_C_0_3';
+
+
 % plot_gp.ligand(ligand_number).metal(metal_number).X = X;
 % plot_gp.ligand(ligand_number).metal(metal_number).Y = Y;
 % plot_gp.ligand(ligand_number).metal(metal_number).Z = Z;
@@ -82,9 +85,9 @@ hA.YAxis.MinorTickValues = [0:1:14];
 
 %lim = caxis;
 
-% cmax = 15;
-% cmin = 0;
-% caxis([cmin cmax])
+cmax = 15;
+cmin = 0;
+caxis([cmin cmax])
 
 h.LevelList;
 c = colorbar;
@@ -96,7 +99,7 @@ c.Label.FontName = 'Helvetica Neue';
 c.Label.FontWeight = 'Bold';
 %c.Ticks = [0  5  10  15];
 c.TickDirection = 'both';
-%colormap viridis
+colormap viridis
 width = 2.75;
 height = 2;
 set(fig_contour_print, 'Position', [400,400,width   *80,height    *76.53])

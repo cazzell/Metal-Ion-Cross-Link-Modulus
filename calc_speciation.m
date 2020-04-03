@@ -44,7 +44,8 @@ pH = linspace(species_input_model.pH(1), species_input_model.pH(2), num_pH_titra
 speciation.pH_list = pH;
 
 % Raster molar concentrations of components
-num_increments = 50;
+num_increments = 100;
+%num_increments = 10;
 initial_M = species_input_model.initial_M;
 final_M = species_input_model.final_M;
 num_components_rastered = length(initial_M);

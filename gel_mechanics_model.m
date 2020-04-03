@@ -8,7 +8,7 @@
 
 % This is the program that should be run to generate predictions. It calls
 % the other functions. Please modify "generate_models.m" for your system of
-% interest
+% interest 
 
 %% Please reference
 % "Expanding the stoichiometric window for metal cross-linked gel assembly using competition" PNAS, Cazzell (2019)
@@ -45,10 +45,9 @@ warning('off','all')
 % Runs speciation program to predict species concentrations vs. pH for each input titration
 [speciation] = calc_speciation(species_input_model)
 
-
 % Calculates and plots mechanics
 [mechanics] = calc_mechanics(species_input_model,speciation)
 
 % Code to save generated data
-save('structures.mat','species_input_model','speciation')
+save('structures.mat','species_input_model','speciation','mechanics')
 

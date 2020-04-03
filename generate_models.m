@@ -20,7 +20,7 @@ description = 'DescriptionText';
 
 %ligands = {'n','n','c','n'};
 %ligands = {'n','c'};
-ligands = {'n'}
+ligands = {'n','n'};
 
 % ligand functionality defines what the ligand is covalently attached to
 % enter a value of
@@ -29,7 +29,9 @@ ligands = {'n'}
 % f for a arbitrary f-arm star polymer ligand
 %ligands_functionality = [2,3,0,4];
 %ligands_functionality = [2, 4];
-ligands_functionality = [4];
+%ligands_functionality = [1,2];
+%ligands_functionality = [2,1];
+ligands_functionality = [2,1];
 
 %metals = {'Fe','Al'};
 %metals = {'Cu','Ni'};
@@ -46,22 +48,25 @@ hydroxide = {'OH'};
 % aka metals, then ligands
 
 % This is a calculator to figure out molar concentrations for a standard gel
-poly_concentration = 100; % mg/mL
-calc_poly_MW = 10000; % g/mol
-poly_M = poly_concentration ./ calc_poly_MW;  % mol/L
-critical_arms = 4;
-lig_eqv = poly_M .* critical_arms;
+% poly_concentration = 50; % mg/mL
+% calc_poly_MW = 5000; % g/mol
+% poly_M = poly_concentration ./ calc_poly_MW;  % mol/L
+% critical_arms = 2;
+% lig_eqv = poly_M .* critical_arms;
+% % Directly enforce M concentration
+lig_eqv = 0.04;
 
 % metals first, then ligand
 % initial_M_eqv = [5/3, 10/3, 1, 1];
 % final_M_eqv =	[10/3, 5/3, 1, 1];
-initial_M_eqv = [.01, 1];
-final_M_eqv =	[5/3, 1];
+initial_M_eqv = [1, 1, 1*10^-6];
+final_M_eqv =	[1, 1, 2];
 
 initial_M = initial_M_eqv .* lig_eqv;
 final_M = final_M_eqv .* lig_eqv;
 
 pH_range = [0,14];
+%num_pH = 126;
 num_pH = 251;
 
 %% Formation Constants are taken from Smith, R. M. & Martell, A. E. "Critical Stability Constants," volume indicated
@@ -226,7 +231,7 @@ H_OH_indices = [proton_index, component_numbers.hydroxide];
 
 % Generate the row numbers for the components
 component_numbers.proton = 1;
-component_numbers.metals = 2:1+number.ligands;
+component_numbers.metals = 2:1+number.metals;
 component_numbers.ligands = max(component_numbers.metals)+1:max(component_numbers.metals)+number.ligands;
 
 base_vector = zeros(number.components,1);
