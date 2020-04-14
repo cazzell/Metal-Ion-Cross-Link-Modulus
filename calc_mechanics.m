@@ -42,8 +42,6 @@ metal_comp_indices_H = [2:num_metals+1];
 ligand_comp_indices = [num_metals+1:num_components];
 metal_comp_indices = [1:num_metals];
 
-%% First thing to do next is to factor out the molar quantities that are in MOH complexes. MOH indices are not in species_input_model.
-
 %% Calculate pl
 % pm = 1 always
 % Create pA/pB matrix
@@ -59,7 +57,6 @@ for titration_number = 1:num_titrations
 	
 	mechanics.titration_number(titration_number).total_ligand(num_ligands+1) = sum(speciation.molar.component_concentration(titration_number, ligand_comp_indices));
 	mechanics.titration_number(titration_number).total_metal(num_metals+1) = sum(speciation.molar.component_concentration(titration_number, metal_comp_indices));
-	
 end
 
 %% Calculate lf
@@ -149,13 +146,9 @@ for titration_number = 1:num_titrations
 		end
 	end
 	
-	
-	
-	% messing with these next two loops does stuff.
 	for ligand_number = 1:num_ligands + 1
 		for metal_number = 1:num_metals + 1
 			mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).pL = mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).bound_L_molar ./ mechanics.titration_number(titration_number).total_ligand(ligand_number);
-			%mechanics.titration_number(titration_number).ligand(ligand).metal(metal).pL = mechanics.titration_number(titration_number).ligand(ligand).metal(metal).bound_L_molar ./ mechanics.titration_number(titration_number).total_ligand(end);
 		end
 	end
 
@@ -316,14 +309,8 @@ for titration_number = 1:num_titrations
 		for metal_number = 1:num_metals+1
 			for binding_state = 1:species_input_model.number.binding_states
 				if binding_state > 2
-					%mg = mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).bind_state(binding_state).mg;
-					%bound_M_molar = mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).bound_M_molar;
 					bound_M_molar_binding_state	= mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).bind_state(bind_state).molar_metal;
-
 					F_A_in = mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).F_A_in;
-					
-					% is this right? Or do I need to do a n choose prob
-					% thing again like I did for the polymer
 					molar_crosslinks = bound_M_molar_binding_state .* (1-F_A_in).^(binding_state);
 					mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).molar_crosslinks(:,binding_state) = molar_crosslinks + mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).molar_crosslinks(:,binding_state);
 				end
@@ -345,11 +332,9 @@ end
 for titration_number = 1:num_titrations
 	for ligand_number = 1:num_ligands+1
 		for metal_number = 1:num_metals+1
-			% Sum molar crosslinks and multiply by 1000 to get crosslinkn concentration
+			% Sum molar crosslinks and multiply by 1000 to get crosslink concentration
 			mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).total_mol_per_m_cubed_crosslinks = sum(mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).molar_crosslinks,2).*1000;
-			
-			%[~,max_crosslink_order] = size(speciation.titration(titration_number).metal(metal).molar_crosslinks);
-			
+					
 			% Calculate chain concentration
 			for crosslink_type = 1:max_crosslink_order
 				if crosslink_type > 2
@@ -375,13 +360,33 @@ for titration_number = 1:num_titrations
 end
 
 % Plot contour
-for ligand_number = 1:num_ligands+1
-	for metal_number = 1:num_metals+1
-		[X,Y,Z] = plot_gp_contour(species_input_model,speciation,mechanics,metal_number,ligand_number);
+if num_ligands == 1 && num_metals == 1
+	[X,Y,Z] = plot_gp_contour(species_input_model,speciation,mechanics,num_ligands+1,num_metals+1);
 		mechanics.plot_gp.ligand(ligand_number).metal(metal_number).X = X;
 		mechanics.plot_gp.ligand(ligand_number).metal(metal_number).Y = Y;
 		mechanics.plot_gp.ligand(ligand_number).metal(metal_number).Z = Z;
+else
+	for ligand_number = num_ligands+1
+		for metal_number = 1:num_metals+1
+			[X,Y,Z] = plot_gp_contour(species_input_model,speciation,mechanics,metal_number,ligand_number);
+			mechanics.plot_gp.ligand(ligand_number).metal(metal_number).X = X;
+			mechanics.plot_gp.ligand(ligand_number).metal(metal_number).Y = Y;
+			mechanics.plot_gp.ligand(ligand_number).metal(metal_number).Z = Z;
+		end
 	end
 end
 
 end
+
+
+%% Nested Functions
+
+%% polyPower
+function [output_poly] = polyPower(input_poly, power)
+
+output_poly = 1;
+	for k1 = 1:power
+		output_poly = conv(output_poly, input_poly);
+	end
+end
+

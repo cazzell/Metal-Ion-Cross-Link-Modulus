@@ -44,8 +44,7 @@ pH = linspace(species_input_model.pH(1), species_input_model.pH(2), num_pH_titra
 speciation.pH_list = pH;
 
 % Raster molar concentrations of components
-num_increments = 100;
-%num_increments = 10;
+num_increments = species_input_model.input.num_increments;
 initial_M = species_input_model.initial_M;
 final_M = species_input_model.final_M;
 num_components_rastered = length(initial_M);
@@ -98,10 +97,6 @@ for titration_number=1:num_increments
 	% Acceptance criteria
 	criteria=1e-16;
 		
-% 	% Initializes a variable named as the solid phases as a zero vector of length number of pH points
-% 	for i=1:size(SOLIDNAMES,1)
-% 		txt=[SOLIDNAMES(i,:),'=zeros(num_points,1);']; eval(txt)
-% 	end
 	
 	% Loop at each pH value
 	for pH_number=1:size(pH,2)
@@ -168,11 +163,7 @@ for titration_number=1:num_increments
 				% sized to hold the solids that are returned.
 						
 				[species,err,SItst,solids(Iindex)]=NR_method(Asolution,Asolidtemp',Ksolidtemp,Ksolution,T',guess',iterations*1,criteria);
-										
-%				% Places values into solid named variable list		
-% 				for q=1:size(solids,1)
-% 					txt=[SOLIDNAMES(Iindex(q),:),'(pH_number)=solids(q);']; eval(txt)
-% 				end
+
 				
 			end
 			
@@ -210,17 +201,151 @@ for titration_number=1:num_increments
 		
 	end
 
-%	% Places values into solution species named variable list
-% 	for i=1:size(species_summary,2)
-% 		txt=[SOLUTIONNAMES(i,:),'=species_summary(:,i);']; eval(txt)
-% 	end
+
+end
+
+end
+
+%% Nested Functions from Donald Scott Smith
+
+%% ----------- for fixed pH ----------------
+function [Ksolution,Ksolid,Asolution,Asolid]=get_equilib_fixed_pH(KSOLUTION,KSOLID,ASOLUTION,ASOLID,pH)
+
+% Transforms KSOLUTION, KSOLID, ASOLUTION and ASOLID for the current fixed pH value
+% Removes the hydrogen component from A and rescales the formation constant
+
+% Solutions
+Ksolution=KSOLUTION-ASOLUTION(:,1)*pH;
+% Strip away the proton column
+[~,M]=size(ASOLUTION);
+Asolution=[ASOLUTION(:,2:M)];
+
+% Condensed Phases
+Ksolid=KSOLID-ASOLID(:,1)*pH;
+% Strip away the proton column
+[~,M]=size(ASOLID);
+Asolid=[ASOLID(:,2:M)];
+
+end
+
+%% -------------------- NR method solids present
+function [species,err,SI,solids]=NR_method(Asolution,Asolid,Ksolid,Ksolution,T,guess,iterations,criteria)
+
+Nx=size(Asolution,2);
+Ncp=size(Asolid,2);
+Nc=size(Asolution,1);
+X=guess;
+
+for II=1:iterations
 	
+	Xsolution=X(1:Nx);
+	Xsolid=X(Nx+1:Nx+Ncp);
+	
+	logC=(Ksolution)+Asolution*log10(Xsolution);
+	C=10.^(logC); % calc species
+	
+	Rmass=Asolution'*C+Asolid*Xsolid-T;
+	
+	Q=Asolid'*log10(Xsolution); SI=10.^(Q+Ksolid);
+	RSI=ones(size(SI))-SI;
+	
+	% calc the jacobian
+	z=zeros(Nx+Ncp,Nx+Ncp);
+	
+	for j=1:Nx
+		for k=1:Nx
+			for i=1:Nc
+				z(j,k)=z(j,k)+Asolution(i,j)*Asolution(i,k)*C(i)/Xsolution(k);
+			end
+		end
+	end
+	for j=1:Nx
+		for k=Nx+1:Nx+Ncp
+			%t=Asolid';
+			% z(j,k)=t(k-Nx,j);
+			z(j,k)=Asolid(j,k-Nx);
+		end
+	end
+	for j=Nx+1:Nx+Ncp
+		for k=1:Nx
+			z(j,k)=-1*Asolid(k,j-Nx)*(SI(j-Nx)/Xsolution(k));
+		end
+	end
+	for j=Nx+1:Nx+Ncp
+		for k=Nx+1:Nx+Ncp
+			z(j,k)=0;
+		end
+	end
+	
+	R=[Rmass; RSI]; X=[Xsolution; Xsolid];
+	
+	deltaX=z\(-1*R);
+	one_over_del=max([1, -1*deltaX'./(0.5*X')]); del=1/one_over_del;
+	X=X+del*deltaX;
+	
+	tst=sum(abs(R));
+	if tst<=criteria; break; end
 end
 
+logC=(Ksolution)+Asolution*log10(Xsolution);
+C=10.^(logC); % calc species
+RSI=ones(size(SI))-SI;
+
+Rmass=Asolution'*C+Asolid*Xsolid-T;
+
+err=[Rmass];
+species=[C];
+solids=Xsolid;
+
 end
 
+%% ----------- NR method just solution species
+function [species,err,SI]=NR_method_solution(Asolution,Asolid,Ksolid,Ksolution,T,guess,iterations,criteria)
 
+Nx=size(Asolution,2);
+Ncp=size(Asolid,1);
+Nc=size(Asolution,1);
+X=guess;
 
+for II=1:iterations
+	
+	Xsolution=X(1:Nx);
+	
+	logC=(Ksolution)+Asolution*log10(Xsolution);
+	C=10.^(logC); % calc species
+	
+	Rmass=Asolution'*C-T;
+	
+	
+	Q=Asolid*log10(Xsolution); SI=10.^(Q+Ksolid);
+	RSI=ones(size(SI))-SI;
+	
+	% calc the jacobian
+	
+	z=zeros(Nx,Nx);
+	
+	for j=1:Nx
+		for k=1:Nx
+			for i=1:Nc
+				z(j,k)=z(j,k)+Asolution(i,j)*Asolution(i,k)*C(i)/Xsolution(k);
+			end
+		end
+	end
+	
+	R=[Rmass]; X=[Xsolution];
+	deltaX=z\(-1*R);
+	one_over_del=max([1, -1*deltaX'./(0.5*X')]);
+	del=1/one_over_del;
+	X=X+del*deltaX;
+	
+	tst=sum(abs(R));
+	if tst<=criteria; break; end
+end
+logC=(Ksolution)+Asolution*log10(Xsolution); C=10.^(logC); % calc species
+RSI=ones(size(SI))-SI;
 
+Rmass=Asolution'*C-T;
+err=[Rmass];
+species=[C];
 
-
+end

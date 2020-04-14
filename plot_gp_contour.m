@@ -28,41 +28,35 @@ for titration_number = 1:num_titrations
 	Z(:,titration_number) = mechanics.titration_number(titration_number).ligand(ligand_number).metal(metal_number).gp_phantom;
 end
 
-description_str = char(species_input_model.description);
+description_str = species_input_model.input.description;
 
-description_str = 'M_3_C_0_3';
+met_str = '';
+lig_str = '';
 
+if metal_number > species_input_model.number.metals
+	
+	for current_metal = 1:metal_number-1
+		current_metal_str = species_input_model.input.metals{1,current_metal};
+		met_str = [met_str, current_metal_str];
+	end
+	
+else
+	current_metal = metal_number;
+	current_metal_str = species_input_model.input.metals{1,current_metal};
+	met_str = [met_str, current_metal_str];
+end
 
-% plot_gp.ligand(ligand_number).metal(metal_number).X = X;
-% plot_gp.ligand(ligand_number).metal(metal_number).Y = Y;
-% plot_gp.ligand(ligand_number).metal(metal_number).Z = Z;
+%Add ligands
+for current_ligand = 1:species_input_model.number.ligands
+	lig_str = [lig_str, species_input_model.input.ligands{1,current_ligand}];
+end
 
-% % Plot 3D Figure
-% fig_surf = figure;
-%
-% s = surf(X,Y,Z);
-% s.EdgeColor = 'interp';
-% title(description_str,'fontsize',16,'FontName', 'Helvetica Neue')
-% xlabel('Metal Equivalency','fontsize',14,'FontName', 'Helvetica Neue')
-% ylabel('pH','fontsize',14,'FontName', 'Helvetica Neue')
-% zlabel('Plateau Modulus (Pa)','fontsize',14,'FontName', 'Helvetica Neue')
-%
-% axis([0,5/3,0,14,0,17000])
-% xticks([0; 1/3; 2/3; 3/3; 4/3; 5/3]);
-% xticklabels({'0/3'; '1/3'; '2/3'; '3/3'; '4/3'; '5/3'});
-% yticks([0; 2; 4; 6; 8; 10; 12; 14]);
-% yticklabels({0; 2; 4; 6; 8; 10; 12; 14});
-% hA = gca;
-% hA.YAxis.MinorTickValues = [0:1:14];
-%
-% axis square
-%
-% set(gcf,'renderer','Painters')
-%
-% saveas(fig_surf,description_str)
-%
-% saveas(fig_surf,[description_str, 'surf_print'])
-% saveas(fig_surf,[description_str, 'surf_print'],'epsc')
+title_str = [lig_str, '-', met_str];
+
+% Builds x-axis labels
+x_tick_labels = species_input_model.input.x_tick_labels;
+ticks = length(x_tick_labels);
+x_tick = linspace(1, species_input_model.input.num_increments, ticks);
 
 fontsize = 9.5;
 
@@ -73,19 +67,16 @@ h.LineWidth = .5;
 h.LineStyle = '-';
 set(gca,'FontName','Helvetica Neue','FontSize',fontsize)
 set(gca,'Box','on')
-xlabel('Titration Number','fontsize',fontsize,'FontName', 'Helvetica Neue','FontWeight','Bold')
+xlabel(species_input_model.input.label,'fontsize',fontsize,'FontName', 'Helvetica Neue','FontWeight','Bold')
 ylabel('pH','fontsize',fontsize,'FontName', 'Helvetica Neue','FontWeight','Bold')
-%xticks([0; 1/3; 2/3; 3/3; 4/3; 5/3]);
-%xticklabels({'0/3'; '1/3'; '2/3'; '3/3'; '4/3'; '5/3'});
+xticks(x_tick);
+xticklabels(x_tick_labels);
 yticks([0; 2; 4; 6; 8; 10; 12; 14]);
 yticklabels({0; 2; 4; 6; 8; 10; 12; 14});
-%set(gca,'TickDir','both')
 hA = gca;
 hA.YAxis.MinorTickValues = [0:1:14];
 
-%lim = caxis;
-
-cmax = 15;
+cmax = species_input_model.input.contour_max;
 cmin = 0;
 caxis([cmin cmax])
 
@@ -105,15 +96,18 @@ height = 2;
 set(fig_contour_print, 'Position', [400,400,width   *80,height    *76.53])
 
 axis square
+
+title(title_str)
+
 set(gcf,'renderer','Painters')
 
-saveas(fig_contour_print,[description_str, 'contour_print'])
-saveas(fig_contour_print,[description_str, 'contour_print'],'epsc')
+saveas(fig_contour_print,['contour_plot_', description_str, '_' ,title_str])
+saveas(fig_contour_print,['contour_plot_', description_str, '_' ,title_str],'epsc')
 
-% if max(h.LevelList) < cmax
-% 	disp('Well Scaled')
-% else
-% 	disp('Poorly Scaled')
-% end
+if max(h.LevelList) < cmax
+	disp('Well Scaled')
+else
+	disp('Poorly Scaled')
+end
 
 end

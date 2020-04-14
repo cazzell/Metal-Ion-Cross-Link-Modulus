@@ -30,24 +30,119 @@
 % see reference 25 in "Expanding the stoichiometric window for metal cross-linked gel assembly using competition" PNAS, Cazzell (2019)
 % cazzell.lbi@gmail.com
 
-%%
+%% Setup and Clear Space
 close all
 clear
 clc
 
+% Sometimes the matrix is initially unstable, results in a lot of outputs
+% to the command window, which slows processing. These instabilities are
+% corrected 
 warning('off','all')
+
+%% Input Variables
+% description will be a directory that is created
+% where everything will be saved
+description = 'hNiCu';
+
+ligands = {'h'};
+
+% ligand functionality defines what the ligand is covalently attached to
+% enter a value of
+% 1 for a 1-arm polymer bound ligand or monofuntional small molecule
+% 2 for a linear telechelic ligand
+% f for a arbitrary f-arm star polymer ligand
+ligands_functionality = [4];
+
+metals = {'Ni','Cu'};
+
+% Directly enforce M concentration of one ligand equivalence
+lig_eqv = 0.04;
+
+% Initial and final concentrations rastered across titration series
+% General format is [M1, M2, Mn, L1, L2, Ln] or metals, then ligands
+% Initial molar equivalence
+initial_M_eqv = [1, 0, 1];
+% Final molar equivalence
+final_M_eqv =	[0, 1, 1];
+
+% What is changing between intial and final molar specified above? ligand
+% concentration? metal concentration? specify this here to serve as an
+% x-axis label for the contour plots
+label = 'Nickel Concentration';
+
+% Also, for plotting purposes, it's best if you can specify
+% what the numerical range is for this variable
+range = [0, 1];
+% And specify the labels that you numerical labels that you want.
+% You must have a label (an empty one is okay like {''}) at the beginning and end of
+% the range
+%x_tick_labels = [{'0'}, {'.1'}, {'.2'}, {'.3'}, {'.4'}, {'.5'}, {'.6'}, {'.7'}, {'.8'}, {'.9'}, {'1'}];
+%x_tick_labels = [{''}, {'1/3'}, {'2/3'}, {'1'}, {'4/3'}, {''}];
+%x_tick_labels = [{''}, {'Fe'}, {'Al'}];
+x_tick_labels = [{'0'}, {'1'}];
+
+% Fix the value of the maximum of the colorbar for the contour plot.
+% This value is in kPa.
+contour_max = 30;
+% You can check if this is reasonable by checking the maximum after you
+% plot with max(max(mechanics.plot_gp.ligand(end).metal(end).Z))./1000
+% and then adjusting accordingly
+
+% Resolution. Determine the resolution of the contour plot. The higher the
+% resolution, the longer the calculations will take.
+% y-axis, number of pH titrations
+pH_range = [0,14];
+num_pH = 251;
+% x-axis, Number of titrations across initial to final concentrations
+num_increments = 21;
+
+% Use Hydroxides? Change this variable to 0 if you do not want to consider
+% hydroxide competition. This is not advised, as hydroxide competition is
+% present and more realistic. Value of 1 (default) includes hydroxide competition.
+hydroxide_option = 1;
+
+
+%% Package inputs
+input.description = description;
+input.ligands = ligands;
+input.ligands_functionality = ligands_functionality;
+input.metals = metals;
+input.lig_eqv = lig_eqv;
+input.initial_M_eqv = initial_M_eqv;
+input.final_M_eqv =	final_M_eqv;
+input.label = label;
+input.range = range;
+input.x_tick_labels = x_tick_labels;
+input.pH_range = pH_range;
+input.num_pH = num_pH;
+input.num_increments = num_increments;
+input.contour_max = contour_max;
+input.hydroxide_option = hydroxide_option;
+
+% Add path for colormap
+addpath('Colormaps')
+
+% Create and move into directory given by description
+if ~exist(description, 'dir')
+       mkdir(description)
+end
+cd(description)
 
 %% Call Functions
 
 % Generates model used to describe the desired system for the speciation program
-[species_input_model] = generate_models()
+[species_input_model] = generate_models(input);
 
 % Runs speciation program to predict species concentrations vs. pH for each input titration
-[speciation] = calc_speciation(species_input_model)
+[speciation] = calc_speciation(species_input_model);
 
 % Calculates and plots mechanics
-[mechanics] = calc_mechanics(species_input_model,speciation)
+[mechanics] = calc_mechanics(species_input_model,speciation);
 
 % Code to save generated data
 save('structures.mat','species_input_model','speciation','mechanics')
+
+% Return to original directory
+cd ..
 

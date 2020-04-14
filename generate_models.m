@@ -14,60 +14,31 @@
 % THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 %%
-function [species_input_model] = generate_models()
+function [species_input_model] = generate_models(input)
 
-description = 'DescriptionText';
+% Unpack input
+description = input.description;
+ligands = input.ligands;
+ligands_functionality = input.ligands_functionality;
+metals = input.metals;
+lig_eqv = input.lig_eqv;
+initial_M_eqv = input.initial_M_eqv;
+final_M_eqv = input.final_M_eqv;
+pH_range = input.pH_range;
+num_pH = input.num_pH;
+hydroxide_option = input.hydroxide_option;
 
-%ligands = {'n','n','c','n'};
-%ligands = {'n','c'};
-ligands = {'n','n'};
-
-% ligand functionality defines what the ligand is covalently attached to
-% enter a value of
-% 1 for a 1-arm polymer bound ligand or monofuntional small molecule
-% 2 for a linear telechelic ligand
-% f for a arbitrary f-arm star polymer ligand
-%ligands_functionality = [2,3,0,4];
-%ligands_functionality = [2, 4];
-%ligands_functionality = [1,2];
-%ligands_functionality = [2,1];
-ligands_functionality = [2,1];
-
-%metals = {'Fe','Al'};
-%metals = {'Cu','Ni'};
-%metals = {'Co'};
-metals = {'Fe'};
-
-% If you don't want to consider the possible formation of metal-hydroxide
-% species, then comment out hydroxide line
-hydroxide = {'OH'};
-
-% Initial and final concentrations rastered across titration series
-% General format is [M1, M2, Mn, L1, L2, Ln]
-
-% aka metals, then ligands
-
-% This is a calculator to figure out molar concentrations for a standard gel
-% poly_concentration = 50; % mg/mL
-% calc_poly_MW = 5000; % g/mol
-% poly_M = poly_concentration ./ calc_poly_MW;  % mol/L
-% critical_arms = 2;
-% lig_eqv = poly_M .* critical_arms;
-% % Directly enforce M concentration
-lig_eqv = 0.04;
-
-% metals first, then ligand
-% initial_M_eqv = [5/3, 10/3, 1, 1];
-% final_M_eqv =	[10/3, 5/3, 1, 1];
-initial_M_eqv = [1, 1, 1*10^-6];
-final_M_eqv =	[1, 1, 2];
-
+% Calculate initial and final molar concentration of components
+% First make value of 0 = 1*10^-12, because 0 can break the calculation
+initial_M_eqv(initial_M_eqv == 0) = 1*10^-6;
+final_M_eqv(final_M_eqv == 0) = 1*10^-6;
 initial_M = initial_M_eqv .* lig_eqv;
 final_M = final_M_eqv .* lig_eqv;
 
-pH_range = [0,14];
-%num_pH = 126;
-num_pH = 251;
+% Toggles hydroxide competition
+if hydroxide_option == 1
+	hydroxide = {'OH'};
+end
 
 %% Formation Constants are taken from Smith, R. M. & Martell, A. E. "Critical Stability Constants," volume indicated
 
@@ -89,6 +60,10 @@ binding.h.H.matrix(1).constants(1,2) = 6.07 + 9.83;
 % Volume 5
 binding.c.H.matrix(1).constants(1,1) = 12.8;
 binding.c.H.matrix(1).constants(1,2) = 9.4 + 12.8;
+
+% Imidazole = i
+% Volume 6 page 249 (4-methylimidazole)
+binding.i.H.matrix(1).constants(1,1) = 7.56;
 
 % Hydroxide = OH
 binding.OH.H.matrix(1).constants(1,1) = 13.997;
@@ -122,8 +97,6 @@ binding.h.Co.matrix(1).constants(3,1) = 10.97;	% Volume 2
 % Copper = Cu
 binding.h.Cu.matrix(1).constants(1,1) = 9.56;	% Volume 2
 binding.h.Cu.matrix(1).constants(2,1) = 16.13;	% Volume 2
-% this is made up for now....
-binding.h.Cu.matrix(1).constants(3,1) = 01;	% Volume 2
 
 % Zinc = Zn
 binding.h.Zn.matrix(1).constants(1,1) = 5.03;	% Volume 2
@@ -136,11 +109,36 @@ binding.c.Fe.matrix(1).constants(1,1) = 20.0;	% Volume 5
 binding.c.Fe.matrix(1).constants(2,1) = 34.7;	% Volume 5
 binding.c.Fe.matrix(1).constants(3,1) = 43.8;	% Volume 5
 
-%% THIS IS WRONG! FIX THIS. CURRENT VALUES ARE JUST FOR DEBUGGING CODE
-%Aluminum = Al
-binding.c.Al.matrix(1).constants(1,1) = 15;
-binding.c.Al.matrix(1).constants(2,1) = 27;
-binding.c.Al.matrix(1).constants(3,1) = 36;
+% Aluminum = Al
+binding.c.Al.matrix(1).constants(1,1) = 16.3;	% Volume 3
+binding.c.Al.matrix(1).constants(2,1) = 29.3;	% Volume 3
+binding.c.Al.matrix(1).constants(3,1) = 37.6;	% Volume 3
+
+% Imidazole = i (4-methylimidazole) Volume 6 page 249 and 250
+% Ni
+binding.i.Ni.matrix(1).constants(1,1) = 2.92;
+binding.i.Ni.matrix(1).constants(2,1) = 5.25;
+binding.i.Ni.matrix(1).constants(3,1) = 7.03;
+binding.i.Ni.matrix(1).constants(4,1) = 8.25;
+
+% Co
+binding.i.Co.matrix(1).constants(1,1) = 2.34;
+binding.i.Co.matrix(1).constants(2,1) = 4.09;
+binding.i.Co.matrix(1).constants(3,1) = 5.33;
+binding.i.Co.matrix(1).constants(4,1) = 6.67;
+
+% Cu
+binding.i.Cu.matrix(1).constants(1,1) = 4.18;
+binding.i.Cu.matrix(1).constants(2,1) = 7.74;
+binding.i.Cu.matrix(1).constants(3,1) = 10.70;
+binding.i.Cu.matrix(1).constants(4,1) = 13.05;
+
+% Zn
+binding.i.Zn.matrix(1).constants(1,1) = 2.48;
+binding.i.Zn.matrix(1).constants(2,1) = 5.06;
+binding.i.Zn.matrix(1).constants(3,1) = 7.74;
+binding.i.Zn.matrix(1).constants(4,1) = 10.52;
+
 
 %% Metals-Hydroxide
 % Stoichiometry
@@ -372,17 +370,23 @@ for ligand_number = 1:length(ligands)
 			end
 			if M_value > 0
 				if L_value > 0
+					% Initialize species_input_model.indices.bind_state().indices for all ligands and metals
+					if ~isfield(indices, 'binding_state') %checks if first time entering
+						indices.binding_state(L_value).indices = cell(length(ligands), length(metals));
+					elseif L_value > length(indices.binding_state)
+						indices.binding_state(L_value).indices = cell(length(ligands), length(metals));
+					end
 					indices.binding_state(L_value).indices{ligand_number,metal_number} = current_species;
 					bound_L_indices(bound_inc) = current_species;
 					bound_inc = bound_inc + 1;
 				end
-				% can I do OH thing here???
+				% Could add OH items here
 				% Get MOH ligands. Only need to do once, so set ligand = 1
 				if ligand_number == 1
 					if H_value < 0
-						MOH_indices(MOH_inc) = current_species
+						MOH_indices(MOH_inc) = current_species;
 						MOH_inc = MOH_inc + 1;
-						MOH_indices_all(MOH_inc_all) = current_species
+						MOH_indices_all(MOH_inc_all) = current_species;
 						MOH_inc_all = MOH_inc_all + 1;
 					end
 				end
@@ -393,11 +397,10 @@ for ligand_number = 1:length(ligands)
 			indices.bound.indices{ligand_number,metal_number} = bound_L_indices;
 		end
 		if ligand_number == 1
-		indices.MOH.indices{metal_number} = MOH_indices;
-		indices.MOH.indices{length(metals)+1} = MOH_indices_all;
+		%indices.MOH.indices{metal_number} = MOH_indices;
+		%indices.MOH.indices{length(metals)+1} = MOH_indices_all;
 		end
 	end
-	
 end
 
 long_hold_vector = [];
@@ -484,7 +487,7 @@ for current_species = 1:size(model_solids,2)
 end
 
 % Add functionalities for combination
-[rows,columns] = size(functionalities)
+[rows,columns] = size(functionalities);
 
 % Add to column
 for row_num = 1:rows
@@ -510,18 +513,26 @@ species_input_model.pH = pH_range;
 species_input_model.spec_names = species_names;
 species_input_model.Model = model;
 species_input_model.log_beta = model_log_beta;
-%species_input_model.beta = 10.^model_log_beta;
 
-species_input_model.spec_names_solids = species_names_solids;
-species_input_model.Model_solids = model_solids;
-species_input_model.log_beta_solids = model_solids_log_beta;
+if exist('hydroxide','var')
+	species_input_model.spec_names_solids = species_names_solids;
+	species_input_model.Model_solids = model_solids;
+	species_input_model.log_beta_solids = model_solids_log_beta;
+	species_input_model.calc_spec.SOLIDNAMES = char(species_names_solids);
+	species_input_model.calc_spec.KSOLID = model_solids_log_beta';
+	species_input_model.calc_spec.ASOLID = model_solids';
+else
+	species_input_model.spec_names_solids = {};
+	species_input_model.Model_solids = double.empty(number.components,0);
+	species_input_model.log_beta_solids = double.empty(1,0);
+	species_input_model.calc_spec.SOLIDNAMES = '';
+	species_input_model.calc_spec.KSOLID = double.empty(0,1);
+	species_input_model.calc_spec.ASOLID = double.empty(0,number.components);
+end
 
 species_input_model.calc_spec.KSOLUTION = model_log_beta';
 species_input_model.calc_spec.ASOLUTION = model';
 species_input_model.calc_spec.SOLUTIONNAMES = char(species_names);
-species_input_model.calc_spec.KSOLID = model_solids_log_beta';
-species_input_model.calc_spec.ASOLID = model_solids';
-species_input_model.calc_spec.SOLIDNAMES = char(species_names_solids);
 
 species_input_model.components = components;
 species_input_model.indices = indices;
@@ -537,6 +548,8 @@ species_input_model.num_pH = num_pH;
 species_input_model.ligands = ligands;
 species_input_model.model_all = [model, model_solids];
 species_input_model.log_beta_all = [model_log_beta, model_solids_log_beta];
+% Saves other input variables for access later
+species_input_model.input = input;
 
 [~ , max_binding_state] = size(species_input_model.indices.binding_state);
 species_input_model.number.binding_states = max_binding_state;
