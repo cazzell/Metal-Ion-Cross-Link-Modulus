@@ -38,12 +38,12 @@ clc
 % Define y-axis for this plot to be either modulus or speciation
 % speciation is 1
 % modulus is 2
-y_choice = 2;
+y_choice = 1;
 
 % Constant pH, or other titration variable
 % constant pH is 1
 % constant titration is 2
-constant_choice = 2;
+constant_choice = 1;
 
 % regardless of choice, specify the component number that you want to examine
 component_number_examine = 1;
@@ -54,8 +54,11 @@ constant_pH = 7;
 constant_component_value = 0.02;
 
 % Specify data to load. Should be the same as your gel_mechanics_model.m description
-description = 'hNi';
+description = 'hNiCu';
 
+% Specify number of metals. This excludes some plots which are harder to
+% make with more metals.
+num_metals = 2;
 
 %% Begin Program...
 % Load data
@@ -74,11 +77,11 @@ if y_choice == 1
 		
 		plot_str = num2str(constant_pH);
 		
-		% get speciation data at this index. 
+		% get speciation data at this index.
 		for titration_number = 1:species_input_model.input.num_increments
 			species(titration_number,:) = speciation.titration_number(titration_number).species(pH_index,:);
-		end	
-				
+		end
+		
 		species_names = [species_input_model.spec_names, species_input_model.spec_names_solids];
 		model = species_input_model.model_all;
 		
@@ -87,25 +90,28 @@ if y_choice == 1
 		species_names(species_input_model.H_OH_indices) = [];
 		model(:,species_input_model.H_OH_indices) = [];
 		
-		% get number of ligands and number of metals
-		% num_components, removing H
-		num_components = species_input_model.number.components - 1;
-		num_ligands = species_input_model.number.ligands;
-		num_metals = species_input_model.number.metals;
-		ligand_sum_index = num_ligands + 1;
-		metal_sum_index = num_metals + 1;
-		% with H component
-		ligand_comp_indices_H = [num_metals+2:num_components+1];
-		metal_comp_indices_H = [2:num_metals+1];
-		% without H component
-		ligand_comp_indices = [num_metals+1:num_components];
-		metal_comp_indices = [1:num_metals];
+		if num_metals == 1
+			% get number of ligands and number of metals
+			% num_components, removing H
+			num_components = species_input_model.number.components - 1;
+			num_ligands = species_input_model.number.ligands;
+			num_metals = species_input_model.number.metals;
+			ligand_sum_index = num_ligands + 1;
+			metal_sum_index = num_metals + 1;
+			% with H component
+			ligand_comp_indices_H = [num_metals+2:num_components+1];
+			metal_comp_indices_H = [2:num_metals+1];
+			% without H component
+			ligand_comp_indices = [num_metals+1:num_components];
+			metal_comp_indices = [1:num_metals];
+			
+			% figure out sum of ligand
+			total_ligand = median(sum(species.*model(ligand_comp_indices_H,:),2));
+			% figure out sum of metal
+			total_metal = median(sum(species.*model(metal_comp_indices_H,:),2));
+			total_metal = sum(species.*model(metal_comp_indices_H,:),2);
+		end
 		
-		% figure out sum of ligand
-		total_ligand = median(sum(species.*model(ligand_comp_indices_H,:),2));
-		% figure out sum of metal
-		total_metal = median(sum(species.*model(metal_comp_indices_H,:),2));
-		total_metal = sum(species.*model(metal_comp_indices_H,:),2);
 		
 		molar_list = speciation.molar.component_concentration(:,component_number_examine);
 		
@@ -122,65 +128,67 @@ if y_choice == 1
 		savefig(['speciation_',plot_str,'_species','.fig'])
 		saveas(gcf,['speciation_',plot_str,'_species','.eps'],'epsc')
 		
-		% Plot of ligand raw
-		plot_species_l_raw = species.*model(ligand_comp_indices_H,:);
-		l_raw_sum = sum(plot_species_l_raw,1);
-		l_raw_indices = find(l_raw_sum > 0);
-		
-		figure
-		plot(molar_list, plot_species_l_raw)
-		xlabel('Molar Concentration of Component')
-		ylabel('Molar Concentration of Ligand')
-		legend(species_names(l_raw_indices))
-		axis square
-		box on
-		savefig(['speciation_',plot_str,'_l_raw','.fig'])
-		saveas(gcf,['speciation_',plot_str,'_l_raw','.eps'],'epsc')
+		if num_metals == 1
+			% Plot of ligand raw
+			plot_species_l_raw = species.*model(ligand_comp_indices_H,:);
+			l_raw_sum = sum(plot_species_l_raw,1);
+			l_raw_indices = find(l_raw_sum > 0);
 			
-		% Plot of metal raw
-		plot_species_m_raw = species.*model(metal_comp_indices_H,:);
-		m_raw_sum = sum(plot_species_m_raw,1);
-		m_raw_indices = find(m_raw_sum > 0);
-		
-		figure
-		plot(molar_list, plot_species_m_raw)
-		xlabel('Molar Concentration of Component')
-		ylabel('Molar Concentration of Metal')
-		legend(species_names(m_raw_indices))
-		axis square
-		box on
-		savefig(['speciation_',plot_str,'_m_raw','.fig'])
-		saveas(gcf,['speciation_',plot_str,'_m_raw','.eps'],'epsc')
-		
-		% Plot of ligand fraction
-		plot_species_l_frac = species.*model(ligand_comp_indices_H,:) ./ total_ligand;
-		l_frac_sum = sum(plot_species_l_frac,1);
-		l_frac_indices = find(l_frac_sum > 0);
-		
-		figure
-		plot(molar_list, plot_species_l_frac(:,l_frac_indices))
-		xlabel('Molar Concentration of Component')
-		ylabel('Fraction of Ligand')
-		legend(species_names(l_frac_indices))
-		axis square
-		box on
-		savefig(['speciation_',plot_str,'_l_frac','.fig'])
-		saveas(gcf,['speciation_',plot_str,'_l_frac','.eps'],'epsc')
-		
-		% Plot of metal fraction
-		plot_species_m_frac = species.*model(metal_comp_indices_H,:) ./ total_metal;
-		m_frac_sum = sum(plot_species_m_frac,1);
-		m_frac_indices = find(m_frac_sum > 0);
-		
-		figure
-		plot(molar_list, plot_species_m_frac)
-		xlabel('Molar Concentration of Component')
-		ylabel('Fraction of Metal')
-		legend(species_names(m_frac_indices))
-		axis square
-		box on
-		savefig(['speciation_',plot_str,'_m_frac','.fig'])
-		saveas(gcf,['speciation_',plot_str,'_m_frac','.eps'],'epsc')
+			figure
+			plot(molar_list, plot_species_l_raw)
+			xlabel('Molar Concentration of Component')
+			ylabel('Molar Concentration of Ligand')
+			legend(species_names(l_raw_indices))
+			axis square
+			box on
+			savefig(['speciation_',plot_str,'_l_raw','.fig'])
+			saveas(gcf,['speciation_',plot_str,'_l_raw','.eps'],'epsc')
+			
+			% Plot of metal raw
+			plot_species_m_raw = species.*model(metal_comp_indices_H,:);
+			m_raw_sum = sum(plot_species_m_raw,1);
+			m_raw_indices = find(m_raw_sum > 0);
+			
+			figure
+			plot(molar_list, plot_species_m_raw)
+			xlabel('Molar Concentration of Component')
+			ylabel('Molar Concentration of Metal')
+			legend(species_names(m_raw_indices))
+			axis square
+			box on
+			savefig(['speciation_',plot_str,'_m_raw','.fig'])
+			saveas(gcf,['speciation_',plot_str,'_m_raw','.eps'],'epsc')
+			
+			% Plot of ligand fraction
+			plot_species_l_frac = species.*model(ligand_comp_indices_H,:) ./ total_ligand;
+			l_frac_sum = sum(plot_species_l_frac,1);
+			l_frac_indices = find(l_frac_sum > 0);
+			
+			figure
+			plot(molar_list, plot_species_l_frac(:,l_frac_indices))
+			xlabel('Molar Concentration of Component')
+			ylabel('Fraction of Ligand')
+			legend(species_names(l_frac_indices))
+			axis square
+			box on
+			savefig(['speciation_',plot_str,'_l_frac','.fig'])
+			saveas(gcf,['speciation_',plot_str,'_l_frac','.eps'],'epsc')
+			
+			% Plot of metal fraction
+			plot_species_m_frac = species.*model(metal_comp_indices_H,:) ./ total_metal;
+			m_frac_sum = sum(plot_species_m_frac,1);
+			m_frac_indices = find(m_frac_sum > 0);
+			
+			figure
+			plot(molar_list, plot_species_m_frac)
+			xlabel('Molar Concentration of Component')
+			ylabel('Fraction of Metal')
+			legend(species_names(m_frac_indices))
+			axis square
+			box on
+			savefig(['speciation_',plot_str,'_m_frac','.fig'])
+			saveas(gcf,['speciation_',plot_str,'_m_frac','.eps'],'epsc')
+		end
 		
 		
 	end
@@ -199,7 +207,7 @@ if y_choice == 1
 		
 		plot_str = num2str(constant_component_value);
 		
-		% get speciation data at this index. 
+		% get speciation data at this index.
 		species = speciation.titration_number(molar_index).species;
 		species_names = [species_input_model.spec_names, species_input_model.spec_names_solids];
 		model = species_input_model.model_all;
@@ -209,24 +217,26 @@ if y_choice == 1
 		species_names(species_input_model.H_OH_indices) = [];
 		model(:,species_input_model.H_OH_indices) = [];
 		
-		% get number of ligands and number of metals
-		% num_components, removing H
-		num_components = species_input_model.number.components - 1;
-		num_ligands = species_input_model.number.ligands;
-		num_metals = species_input_model.number.metals;
-		ligand_sum_index = num_ligands + 1;
-		metal_sum_index = num_metals + 1;
-		% with H component
-		ligand_comp_indices_H = [num_metals+2:num_components+1];
-		metal_comp_indices_H = [2:num_metals+1];
-		% without H component
-		ligand_comp_indices = [num_metals+1:num_components];
-		metal_comp_indices = [1:num_metals];
-		
-		% figure out sum of ligand
-		total_ligand = median(sum(species.*model(ligand_comp_indices_H,:),2));
-		% figure out sum of metal
-		total_metal = median(sum(species.*model(metal_comp_indices_H,:),2));
+		if num_metals == 1
+			% get number of ligands and number of metals
+			% num_components, removing H
+			num_components = species_input_model.number.components - 1;
+			num_ligands = species_input_model.number.ligands;
+			num_metals = species_input_model.number.metals;
+			ligand_sum_index = num_ligands + 1;
+			metal_sum_index = num_metals + 1;
+			% with H component
+			ligand_comp_indices_H = [num_metals+2:num_components+1];
+			metal_comp_indices_H = [2:num_metals+1];
+			% without H component
+			ligand_comp_indices = [num_metals+1:num_components];
+			metal_comp_indices = [1:num_metals];
+			
+			% figure out sum of ligand
+			total_ligand = median(sum(species.*model(ligand_comp_indices_H,:),2));
+			% figure out sum of metal
+			total_metal = median(sum(species.*model(metal_comp_indices_H,:),2));
+		end
 		
 		% get pH_list
 		pH_list = speciation.pH_list;
@@ -243,67 +253,69 @@ if y_choice == 1
 		box on
 		savefig(['speciation_',plot_str,'_species','.fig'])
 		saveas(gcf,['speciation_',plot_str,'_species','.eps'],'epsc')
-				
-		% Plot of ligand raw
-		plot_species_l_raw = species.*model(ligand_comp_indices_H,:);
-		l_raw_sum = sum(plot_species_l_raw,1);
-		l_raw_indices = find(l_raw_sum > 0);
 		
-		figure
-		plot(pH_list, plot_species_l_raw)
-		xlabel('pH')
-		ylabel('Molar Concentration of Ligand')
-		legend(species_names(l_raw_indices))
-		axis square
-		box on
-		savefig(['speciation_',plot_str,'_l_raw','.fig'])
-		saveas(gcf,['speciation_',plot_str,'_l_raw','.eps'],'epsc')
-		
-		% Plot of metal raw
-		plot_species_m_raw = species.*model(metal_comp_indices_H,:);
-		m_raw_sum = sum(plot_species_m_raw,1);
-		m_raw_indices = find(m_raw_sum > 0);
-		
-		figure
-		plot(pH_list, plot_species_m_raw)
-		xlabel('pH')
-		ylabel('Molar Concentration of Metal')
-		legend(species_names(m_raw_indices))
-		axis square
-		box on
-		savefig(['speciation_',plot_str,'_m_raw','.fig'])
-		saveas(gcf,['speciation_',plot_str,'_m_raw','.eps'],'epsc')
-		
-		
-		% Plot of ligand fraction
-		plot_species_l_frac = species.*model(ligand_comp_indices_H,:) ./ total_ligand;
-		l_frac_sum = sum(plot_species_l_frac,1);
-		l_frac_indices = find(l_frac_sum > 0);
-		
-		figure
-		plot(pH_list, plot_species_l_frac(:,l_frac_indices))
-		xlabel('pH')
-		ylabel('Fraction of Ligand')
-		legend(species_names(l_frac_indices))
-		axis square
-		box on
-		savefig(['speciation_',plot_str,'_l_frac','.fig'])
-		saveas(gcf,['speciation_',plot_str,'_l_frac','.eps'],'epsc')
-		
-		% Plot of metal fraction
-		plot_species_m_frac = species.*model(metal_comp_indices_H,:) ./ total_metal;
-		m_frac_sum = sum(plot_species_m_frac,1);
-		m_frac_indices = find(m_frac_sum > 0);
-		
-		figure
-		plot(pH_list, plot_species_m_frac)
-		xlabel('pH')
-		ylabel('Fraction of Metal')
-		legend(species_names(m_frac_indices))
-		axis square
-		box on
-		savefig(['speciation_',plot_str,'_m_frac','.fig'])
-		saveas(gcf,['speciation_',plot_str,'_m_frac','.eps'],'epsc')
+		if num_metals == 1
+			% Plot of ligand raw
+			plot_species_l_raw = species.*model(ligand_comp_indices_H,:);
+			l_raw_sum = sum(plot_species_l_raw,1);
+			l_raw_indices = find(l_raw_sum > 0);
+			
+			figure
+			plot(pH_list, plot_species_l_raw)
+			xlabel('pH')
+			ylabel('Molar Concentration of Ligand')
+			legend(species_names(l_raw_indices))
+			axis square
+			box on
+			savefig(['speciation_',plot_str,'_l_raw','.fig'])
+			saveas(gcf,['speciation_',plot_str,'_l_raw','.eps'],'epsc')
+			
+			% Plot of metal raw
+			plot_species_m_raw = species.*model(metal_comp_indices_H,:);
+			m_raw_sum = sum(plot_species_m_raw,1);
+			m_raw_indices = find(m_raw_sum > 0);
+			
+			figure
+			plot(pH_list, plot_species_m_raw)
+			xlabel('pH')
+			ylabel('Molar Concentration of Metal')
+			legend(species_names(m_raw_indices))
+			axis square
+			box on
+			savefig(['speciation_',plot_str,'_m_raw','.fig'])
+			saveas(gcf,['speciation_',plot_str,'_m_raw','.eps'],'epsc')
+			
+			
+			% Plot of ligand fraction
+			plot_species_l_frac = species.*model(ligand_comp_indices_H,:) ./ total_ligand;
+			l_frac_sum = sum(plot_species_l_frac,1);
+			l_frac_indices = find(l_frac_sum > 0);
+			
+			figure
+			plot(pH_list, plot_species_l_frac(:,l_frac_indices))
+			xlabel('pH')
+			ylabel('Fraction of Ligand')
+			legend(species_names(l_frac_indices))
+			axis square
+			box on
+			savefig(['speciation_',plot_str,'_l_frac','.fig'])
+			saveas(gcf,['speciation_',plot_str,'_l_frac','.eps'],'epsc')
+			
+			% Plot of metal fraction
+			plot_species_m_frac = species.*model(metal_comp_indices_H,:) ./ total_metal;
+			m_frac_sum = sum(plot_species_m_frac,1);
+			m_frac_indices = find(m_frac_sum > 0);
+			
+			figure
+			plot(pH_list, plot_species_m_frac)
+			xlabel('pH')
+			ylabel('Fraction of Metal')
+			legend(species_names(m_frac_indices))
+			axis square
+			box on
+			savefig(['speciation_',plot_str,'_m_frac','.fig'])
+			saveas(gcf,['speciation_',plot_str,'_m_frac','.eps'],'epsc')
+		end
 		
 	end
 	
@@ -313,7 +325,7 @@ end
 % Gp plots
 if y_choice == 2
 	if constant_choice == 1
-			
+		
 		pH_list = speciation.pH_list;
 		pH_diff_list = abs(constant_pH - pH_list);
 		pH_match_list = find(pH_diff_list == min(pH_diff_list));

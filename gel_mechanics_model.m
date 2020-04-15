@@ -69,7 +69,7 @@ final_M_eqv =	[0, 1, 1];
 % What is changing between intial and final molar specified above? ligand
 % concentration? metal concentration? specify this here to serve as an
 % x-axis label for the contour plots
-label = 'Nickel Concentration';
+label = 'Composition';;
 
 % Also, for plotting purposes, it's best if you can specify
 % what the numerical range is for this variable
@@ -80,7 +80,7 @@ range = [0, 1];
 %x_tick_labels = [{'0'}, {'.1'}, {'.2'}, {'.3'}, {'.4'}, {'.5'}, {'.6'}, {'.7'}, {'.8'}, {'.9'}, {'1'}];
 %x_tick_labels = [{''}, {'1/3'}, {'2/3'}, {'1'}, {'4/3'}, {''}];
 %x_tick_labels = [{''}, {'Fe'}, {'Al'}];
-x_tick_labels = [{'0'}, {'1'}];
+x_tick_labels = [{'100% Ni'}, {'100% Cu'}];
 
 % Fix the value of the maximum of the colorbar for the contour plot.
 % This value is in kPa.
@@ -95,7 +95,7 @@ contour_max = 30;
 pH_range = [0,14];
 num_pH = 251;
 % x-axis, Number of titrations across initial to final concentrations
-num_increments = 21;
+num_increments = 201;
 
 % Use Hydroxides? Change this variable to 0 if you do not want to consider
 % hydroxide competition. This is not advised, as hydroxide competition is
@@ -119,9 +119,6 @@ input.num_pH = num_pH;
 input.num_increments = num_increments;
 input.contour_max = contour_max;
 input.hydroxide_option = hydroxide_option;
-
-% Add path for colormap
-addpath('Colormaps')
 
 % Create and move into directory given by description
 if ~exist(description, 'dir')
