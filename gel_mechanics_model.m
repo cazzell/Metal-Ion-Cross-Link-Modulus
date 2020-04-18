@@ -1,20 +1,23 @@
 %% Code authored by Seth Allen Cazzell
 % cazzell.lbi@gmail.com
 
+% This is the program where you describe your system and input the
+% variables.
+
 % This is the master driver that calls other functions to generate
 % theoretical predictions for metal-coordinated hydrogels of arbitrary
 % functionality and combination of metals and ligands. Predicts gel plateau
 % moduli as a function of pH and titrating concentrations.
 
-% This is the program that should be run to generate predictions. It calls
-% the other functions. Please modify "generate_models.m" for your system of
-% interest 
+% Please modify "generate_models.m" for your system of
+% interest if desired ligand and metal is not present
 
 %% Please reference
 % "Expanding the stoichiometric window for metal cross-linked gel assembly using competition" PNAS, Cazzell (2019)
+% "Engineering gelation in metal ion cross-linked hydrogels" MIT Thesis, Cazzell (2020)
 % when appropriate.
 
-%% Copyright 2019 Seth Allen Cazzell All rights reserved. Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+%% Copyright 2020 Seth Allen Cazzell All rights reserved. Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 % 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
 % 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
 % THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
@@ -69,7 +72,7 @@ final_M_eqv =	[0, 1, 1];
 % What is changing between intial and final molar specified above? ligand
 % concentration? metal concentration? specify this here to serve as an
 % x-axis label for the contour plots
-label = 'Composition';;
+label = 'Composition';
 
 % Also, for plotting purposes, it's best if you can specify
 % what the numerical range is for this variable
@@ -77,9 +80,7 @@ range = [0, 1];
 % And specify the labels that you numerical labels that you want.
 % You must have a label (an empty one is okay like {''}) at the beginning and end of
 % the range
-%x_tick_labels = [{'0'}, {'.1'}, {'.2'}, {'.3'}, {'.4'}, {'.5'}, {'.6'}, {'.7'}, {'.8'}, {'.9'}, {'1'}];
 %x_tick_labels = [{''}, {'1/3'}, {'2/3'}, {'1'}, {'4/3'}, {''}];
-%x_tick_labels = [{''}, {'Fe'}, {'Al'}];
 x_tick_labels = [{'100% Ni'}, {'100% Cu'}];
 
 % Fix the value of the maximum of the colorbar for the contour plot.
