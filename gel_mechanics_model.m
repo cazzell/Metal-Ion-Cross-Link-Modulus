@@ -38,6 +38,11 @@ close all
 clear
 clc
 
+% Add current path to working directory. Your current folder should be the
+% main program folder with all of the .m files.
+install_directory = pwd;
+addpath(install_directory)
+
 % Sometimes the matrix is initially unstable, results in a lot of outputs
 % to the command window, which slows processing. These instabilities are
 % corrected 
