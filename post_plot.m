@@ -6,6 +6,7 @@
 
 %% Please reference
 % "Expanding the stoichiometric window for metal cross-linked gel assembly using competition" PNAS, Cazzell (2019)
+% "Engineering gelation in metal ion cross-linked hydrogels" MIT Thesis, Cazzell (2020)
 % when appropriate.
 
 %% Copyright 2020 Seth Allen Cazzell All rights reserved. Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -83,7 +84,7 @@ if dimension == 1
 	species_names = [species_input_model.spec_names, species_input_model.spec_names_solids];
 	model = species_input_model.model_all;
 	
-	%Prune out H column and OH column
+	% Prune out H column and OH column
 	species(:,species_input_model.H_OH_indices) = [];
 	species_names(species_input_model.H_OH_indices) = [];
 	model(:,species_input_model.H_OH_indices) = [];
@@ -109,8 +110,7 @@ if dimension == 1
 		total_metal = median(sum(species.*model(metal_comp_indices_H,:),2));
 		total_metal = sum(species.*model(metal_comp_indices_H,:),2);
 	end
-	
-	
+
 	molar_list = speciation.molar.component_concentration(:,component_number_examine);
 	
 	% Plot raw species
@@ -188,13 +188,6 @@ if dimension == 1
 		savefig(['speciation_',plot_str,'_m_frac','.fig'])
 		saveas(gcf,['speciation_',plot_str,'_m_frac','.eps'],'epsc')
 	end
-	
-	% 		% Check sum
-	% 		figure
-	% 		plot(molar_list, sum(plot_species_l_frac,2))
-	% 		figure
-	% 		plot(molar_list, sum(plot_species_m_frac,2))
-	
 	
 end
 
@@ -287,7 +280,6 @@ if dimension == 2
 		savefig(['speciation_',plot_str,'_m_raw','.fig'])
 		saveas(gcf,['speciation_',plot_str,'_m_raw','.eps'],'epsc')
 		
-		
 		% Plot of ligand fraction
 		plot_species_l_frac = species.*model(ligand_comp_indices_H,:) ./ total_ligand;
 		l_frac_sum = sum(plot_species_l_frac,1);
@@ -318,18 +310,9 @@ if dimension == 2
 		savefig(['speciation_',plot_str,'_m_frac','.fig'])
 		saveas(gcf,['speciation_',plot_str,'_m_frac','.eps'],'epsc')
 		
-		% 			% Check Sum
-		% 			figure
-		% 			plot(pH_list, sum(plot_species_l_frac,2))
-		% 			figure
-		% 			plot(pH_list, sum(plot_species_m_frac,2))
-		
 	end
 	
 end
-
-
-
 
 % Gp plots
 if dimension == 1
@@ -353,10 +336,8 @@ if dimension == 1
 	box on
 	savefig(['modulus_',plot_str,'_m_frac','.fig'])
 	saveas(gcf,['modulus_',plot_str,'_m_frac','.eps'],'epsc')
-	
-	
-end
 
+end
 
 % Gp plots
 if dimension == 2
@@ -379,30 +360,7 @@ if dimension == 2
 	box on
 	savefig(['modulus_',plot_str,'_m_frac','.fig'])
 	saveas(gcf,['modulus_',plot_str,'_m_frac','.eps'],'epsc')
-	
-	
+
 end
 
-
-
 cd ..
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
